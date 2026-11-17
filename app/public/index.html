@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Claude Clone</title>
+<style>
+:root{--bg:#1a1a1a;--side:#1b1b1b;--text:#f0eee6;--muted:#8e8d88;--border:#3b3b3a;--hover:#2b2b2a;--sel:#323231;--box:#2f2f2f;--accent:#d97757;--user:#2b2b2a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:"Segoe UI",system-ui,sans-serif;font-size:15px;display:flex;flex-direction:column;user-select:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+/* title bar */
+#top{height:44px;flex:none;display:flex;align-items:center;-webkit-app-region:drag;padding-left:10px;position:relative;z-index:30}
+#top>*{-webkit-app-region:no-drag}
+.ib{width:34px;height:32px;border-radius:8px;display:grid;place-items:center;color:#cfcdc6}
+.ib:hover{background:var(--hover)}
+.tabs{margin-left:auto;margin-right:0;display:flex;background:#232322;border-radius:9px;padding:2px;position:absolute;left:var(--tabx);top:6px}
+.tabs .ib{width:42px;height:30px;border-radius:7px}
+.tabs .ib.on{background:#3a3a39}
+#ghost{position:absolute;right:140px;top:6px}
+#app{flex:1;display:flex;min-height:0;border-top:1px solid #2a2a29}
+/* sidebar */
+aside{width:var(--sw);background:var(--side);border-right:1px solid #2e2e2d;display:flex;flex-direction:column;padding:12px 12px 0;flex:none}
+aside.hide{display:none}
+.nav{display:flex;align-items:center;gap:14px;padding:9px 12px;border-radius:9px;width:100%;text-align:left;color:var(--text);font-size:16px}
+.nav:hover{background:var(--hover)}.nav.sel{background:var(--sel)}
+.nav svg{color:#cfcdc6}
+.sec{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:14px;margin:22px 12px 8px}
+#list{flex:1;overflow:auto;margin:0 -4px}
+.conv{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;margin:1px 4px;border-radius:9px;font-size:16px;cursor:pointer;gap:8px}
+.conv:hover,.conv.active{background:var(--hover)}
+.conv span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv b{display:none;color:var(--muted);font-weight:400}
+.conv:hover b{display:block}
+.badge{background:#1f2a3d;color:#6ea8ff;font-size:13px;padding:3px 10px;border-radius:999px;flex:none}
+.viewall{color:var(--muted);padding:9px 12px;margin:1px 4px;font-size:16px}
+.prof{border-top:1px solid #2e2e2d;margin:0 -12px;padding:0 12px;height:56px;display:flex;align-items:center;gap:10px}
+.av{width:26px;height:26px;border-radius:50%;background:#2f6fe4;display:grid;place-items:center;font-size:12px;color:#fff}
+.prof small{color:var(--muted);font-size:14px}
+.prof .ib{margin-left:auto}
+/* main */
+main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+#chat{flex:1;overflow:auto;padding:30px 24px;display:none;user-select:text}
+main.has #chat{display:block}
+.wrap{max-width:760px;margin:0 auto}
+#hello{display:flex;flex-direction:column;align-items:center;margin-top:auto}
+main.has #hello{display:none}
+.greet{font-family:Georgia,"Times New Roman",serif;font-size:40px;display:flex;align-items:center;gap:14px;margin-bottom:34px;letter-spacing:-.5px}
+.greet svg{width:40px;height:40px;stroke:none;fill:var(--accent)}
+#dock{width:100%;padding:0 24px;display:flex;flex-direction:column;align-items:center}
+main:not(.has){justify-content:center}
+main:not(.has) #dock{margin-bottom:12vh}
+main.has #hello{display:none}
+.box{width:100%;max-width:820px;background:var(--box);border:1px solid var(--border);border-radius:16px;padding:14px 16px 12px;display:flex;flex-direction:column}
+textarea{border:0;outline:0;resize:none;background:transparent;color:var(--text);font:inherit;font-size:17px;min-height:44px;max-height:220px;user-select:text}
+textarea::placeholder{color:#807f7a}
+.row{display:flex;align-items:center;gap:6px;color:#cfcdc6;margin-top:6px}
+.row .sp{flex:1}
+#send{background:var(--accent);color:#fff;border-radius:9px;width:32px;height:32px;display:none;place-items:center}
+#send svg{width:18px;height:18px;stroke:#fff}
+.box.typing #send{display:grid}
+.box.typing .voice{display:none}
+.meta{width:100%;max-width:820px;display:flex;justify-content:space-between;padding:14px 12px 0;color:#cfcdc6;font-size:16px}
+.meta .r{display:flex;gap:26px}.meta .r .mut{color:var(--muted)}
+main.has .meta{display:none}
+main.has #dock{padding-bottom:18px}
+/* messages */
+.msg{margin:0 0 24px;line-height:1.65}
+.msg.user{background:var(--user);padding:11px 16px;border-radius:14px;width:fit-content;max-width:85%;margin-left:auto;white-space:pre-wrap;font-size:16px}
+.msg.assistant{font-family:Georgia,"Times New Roman",serif;font-size:17.5px}
+.msg p{margin:0 0 12px}
+.msg pre{background:#232322;border:1px solid var(--border);border-radius:10px;padding:12px;overflow:auto;font-size:13.5px}
+.msg code{font-family:Consolas,monospace;background:#2a2a29;padding:1px 5px;border-radius:5px;font-size:.9em}
+.msg pre code{background:none;padding:0}
+.tool{font:13px "Segoe UI",sans-serif;color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:6px 10px;margin:0 0 12px;width:fit-content}
+.err{color:#f2877d}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:p 1s infinite}
+@keyframes p{50%{opacity:.3}}
+/* menu */
+#menu{position:absolute;left:12px;top:46px;width:130px;background:#262625;border:1px solid #333;border-radius:12px;padding:6px;box-shadow:0 8px 30px rgba(0,0,0,.5);display:none;z-index:50}
+#menu.show{display:block}
+#menu button{display:flex;justify-content:space-between;align-items:center;width:100%;padding:8px 12px;border-radius:8px;font-size:14px;text-align:left}
+#menu button:hover{background:var(--hover)}
+#menu svg{width:14px;height:14px;color:#aaa}
+.pill{position:absolute;bottom:8px;left:50%;width:50px;height:7px;border:1.5px solid #888;border-radius:6px;transform:translateX(-50%);opacity:.8}
+</style>
+</head>
+<body style="--sw:300px;--tabx:230px">
+<div id="top">
+  <button class="ib" id="mbtn" title="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
+  <button class="ib" id="tog" title="Sidebar"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15"/></svg></button>
+  <button class="ib" id="back"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+  <button class="ib" id="fwd" style="color:#77756f"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+  <div class="tabs" id="tabs">
+    <button class="ib on" title="Chat"><svg viewBox="0 0 24 24"><path d="M11 4a7 7 0 100 14 7 7 0 000-14zM16 16l4 4M8 11h6"/></svg></button>
+    <button class="ib" title="Code"><svg viewBox="0 0 24 24"><path d="M9 8l-4 4 4 4M15 8l4 4-4 4M13 6l-2 12"/></svg></button>
+  </div>
+  <button class="ib" id="ghost"><svg viewBox="0 0 24 24"><path d="M6 19V11a6 6 0 0112 0v8l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5z"/><circle cx="10" cy="11" r=".6"/><circle cx="14" cy="11" r=".6"/></svg></button>
+</div>
+<div id="menu">
+  <button data-a="file">File <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+  <button data-a="edit">Edit <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+  <button data-a="view">View <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+  <button data-a="go">Go <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+  <button data-a="help">Help <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+</div>
+<div id="app">
+<aside id="side">
+  <button class="nav sel" id="new"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New chat</button>
+  <button class="nav"><svg viewBox="0 0 24 24"><path d="M5 5h14v10H9l-4 4z"/></svg>Chats</button>
+  <button class="nav"><svg viewBox="0 0 24 24"><path d="M4 7h6l2 2h8v9H4z"/></svg>Projects</button>
+  <button class="nav"><svg viewBox="0 0 24 24"><path d="M14 4l6 6-4 1-5 5-1 4-3-3 4-1 5-5zM5 19l4-4"/></svg>Plugins</button>
+  <div class="sec">Recents <svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M6 9l6 6 6-6"/></svg></div>
+  <div id="list"></div>
+  <div class="prof"><div class="av">C</div><span>Closed Source <small>· Pro ⌄</small></span>
+    <button class="ib"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/></svg></button></div>
+</aside>
+<main id="main">
+  <div id="chat"><div class="wrap" id="msgs"></div></div>
+  <div id="hello"><div class="greet"><svg viewBox="0 0 24 24"><path d="M12 1.5l1.4 6.1 4.3-4.6-2 5.9 6.1-1.8-4.7 4.2 6.2.6-6 1.7 5.2 3.5-6.3-.3 3 5.5-5.2-3.6-.2 6.3-2.7-5.7-2.7 5.7-.2-6.3-5.2 3.6 3-5.5-6.3.3 5.2-3.5-6-1.7 6.2-.6-4.7-4.2 6.1 1.8-2-5.9 4.3 4.6z"/></svg><span id="gtext">Let’s noodle</span></div></div>
+  <div id="dock">
+    <div class="box" id="box">
+      <textarea id="input" rows="1" placeholder="How can I help you today?" autofocus></textarea>
+      <div class="row">
+        <button class="ib" title="Add"><svg viewBox="0 0 24 24" style="width:22px;height:22px"><path d="M12 5v14M5 12h14"/></svg></button>
+        <span class="sp"></span>
+        <button class="ib voice"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button>
+        <button class="ib voice"><svg viewBox="0 0 24 24"><path d="M3 12h1M7 8v8M11 4v16M15 8v8M19 10v4M22 12h-1"/></svg></button>
+        <button id="send" title="Send"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+      </div>
+    </div>
+    <div class="meta"><span>Project or folder ⌄</span><span class="r"><span>GPT-OSS 20B <span class="mut">Medium</span></span><span>Manual</span></span></div>
+  </div>
+  <div class="pill"></div>
+</main>
+</div>
+<script src="vendor/marked.js"></script>
+<script src="vendor/purify.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
