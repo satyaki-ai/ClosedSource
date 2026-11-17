@@ -22,3 +22,8 @@ Thumbs.db
 
 # Cache
 .cache/
+# Local secrets and build output
+.env
+node_modules/
+app/dist*/
+*.log
